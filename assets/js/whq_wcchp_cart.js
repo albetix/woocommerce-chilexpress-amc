@@ -6,6 +6,8 @@ var whq_wcchp_region_name;
 var whq_wcchp_region_code;
 var whq_wcchp_city_name;
 var whq_wcchp_city_code;
+var whq_wcchp_cities_object = false;
+var whq_wcchp_object_to_array;
 
 jQuery(document).ready(function( $ ) {
 	//Only on WooCommerce's Cart
@@ -62,10 +64,12 @@ jQuery(document).ready(function( $ ) {
 				if( jQuery('#shipping_method_0_chilexpress').is(':checked') ) {
 					jQuery('.shipping_method').not('input[value="chilexpress"]:first').click();
 				}
+
 				if( ! jQuery('#wc-chilexpress-verify').length ) {
 					//Disables chilexpress shipping option
 					jQuery('input[value="chilexpress"]').next('label').children('.amount').remove();
 					jQuery('input[value="chilexpress"]').prop('disabled', true).prop('selected', false);
+
 					//Adds the option to check Chilexpress availability
 					jQuery('input[value="chilexpress"]').next('label').after('<span id="wc-chilexpress-verify"> - No disponible (<a class="wc-chilexpress-verify" href="#">Reintentar</a>)</span>');
 					jQuery('#wc-chilexpress-verify').on('click', '.wc-chilexpress-verify', function() {
@@ -104,6 +108,7 @@ function whq_wcchp_cart_chile_detected() {
 	if( jQuery('body').hasClass('wc-chilexpress-enabled') ) {
 		return;
 	}
+
 	jQuery('body').addClass('wc-chilexpress-enabled');
 
 	whq_wcchp_cart_inputs_replace();
@@ -175,12 +180,27 @@ function whq_wcchp_cart_load_cities( region_code ) {
 			} else {
 				jQuery('#calc_shipping_whq_city_select').prop('disabled', false).empty().append('<option value=""></option>');
 
-				var whq_wcchp_city_name = jQuery('#calc_shipping_city').val();
-				var whq_wcchp_city_code = '';
+				whq_wcchp_city_name = jQuery('#calc_shipping_city').val();
+				whq_wcchp_city_code = '';
+
+				//Hard-coded list (Chilexpress API down?)
+				if ( typeof response.data === 'object' ) {
+					whq_wcchp_cities_object   = true;
+					whq_wcchp_object_to_array = Object.keys( response.data ).map( function( key ) {
+						return [ key, response.data[ key ] ];
+					});
+					response.data = whq_wcchp_object_to_array;
+				}
 
 				if( jQuery.isArray( response.data ) ) {
 
-					jQuery(response.data).each(function( i ) {
+					jQuery(response.data).each(function( i, value ) {
+						//Map the hard-coded values back
+						if( whq_wcchp_cities_object === true ) {
+							response.data[i].CodComuna = response.data[i][0];
+							response.data[i].GlsComuna = response.data[i][1];
+						}
+
 						if( response.data[i].GlsComuna == whq_wcchp_city_name ) {
 							whq_wcchp_city_code = response.data[i].CodComuna;
 
