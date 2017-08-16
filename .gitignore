@@ -1,3 +1,4 @@
+#Backup/
 *.ini
 *.log
 deploy.sh
